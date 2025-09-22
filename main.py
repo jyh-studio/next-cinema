@@ -19,9 +19,9 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 30
 pwd_context = argon2.PasswordHasher()
 
 # MongoDB connection
-MONGODB_URI = os.environ.get("MONGODB_URI", "mongodb+srv://jhuang1132_db_user:Y3kXaTbekTstRQLl@next-cinema-playgrnd.virtumc.mongodb.net/?retryWrites=true&w=majority&appName=next-cinema-playgrnd")
+MONGODB_URI = os.environ.get("MONGODB_URI", "mongodb+srv://joyjyhuang_db_user:<db_password>@next-cinema-playgrnd.dqcgzov.mongodb.net/?retryWrites=true&w=majority&appName=next-cinema-playgrnd")
 client = motor.motor_asyncio.AsyncIOMotorClient(MONGODB_URI)
-db = client.get_database("your_database_name")  # Replace with your database name
+db = client.get_database("next-cinema-playgrnd")
 users_collection = db.get_collection("users")
 
 def custom_generate_unique_id(route: APIRoute):
@@ -31,7 +31,7 @@ app = FastAPI(generate_unique_id_function=custom_generate_unique_id)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:32100"],
+    allow_origins=["http://localhost:5137"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
