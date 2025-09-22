@@ -284,9 +284,23 @@
   - Definition of Done:
     - Users can sign up, log in, access a protected page, log out via the frontend.
   - Manual Test Checklist (Frontend):
-    - Create a user, visit a protected page, log out, log back in, verify unauthorized access is blocked.
+    1.  Set the `MONGODB_URI` environment variable.
+    2.  Start the backend using the command `uvicorn main:app --reload`.
+    3.  Open the frontend in a browser at `http://localhost:5137/`.
+    4.  Navigate to the `/signup` page.
+    5.  Enter valid email, password, and name credentials and click the "Signup" button.
+    6.  Verify that the user is successfully signed up and redirected to a protected page (e.g., `/profile`).
+    7.  Navigate to the `/login` page.
+    8.  Enter valid email and password credentials and click the "Login" button.
+    9.  Verify that the user is successfully logged in and redirected to a protected page (e.g., `/profile`).
+    10. Try to access the `/api/v1/users/me` endpoint without a valid token. Verify that you receive a 401 Unauthorized error.
+    11. Access the `/api/v1/users/me` endpoint with a valid token. Verify that you receive the user's profile information.
   - User Test Prompt:
-    - Short steps a tester can follow in the UI to confirm the flow.
+    1.  Make sure the backend is running.
+    2.  Open the frontend in your browser.
+    3.  Sign up for a new account.
+    4.  Log in with your new account.
+    5.  Verify that you are redirected to the profile page.
   - Post-sprint:
     - Commit the changes and push to `main`.
 
@@ -307,9 +321,24 @@
     - Users can create and update their profiles via the frontend.
     - User profiles are displayed correctly on the profile page.
   - Manual Test Checklist (Frontend):
-    - Create a new profile, edit the profile, verify the changes are saved and displayed correctly.
+    1.  Set the `MONGODB_URI` environment variable.
+    2.  Start the backend using the command `uvicorn main:app --reload`.
+    3.  Open the frontend in a browser at `http://localhost:5137/`.
+    4.  Log in with your account.
+    5.  Navigate to the `/profile-builder` page.
+    6.  Fill out the profile builder form and submit it.
+    7.  Verify that you are redirected to the `/profile` page.
+    8.  Verify that your profile information is displayed correctly on the `/profile` page.
+    9.  Navigate to the `/profile-builder` page again.
+    10. Edit your profile information and submit the form.
+    11. Verify that the changes are saved and displayed correctly on the `/profile` page.
   - User Test Prompt:
-    - Short steps a tester can follow in the UI to confirm the flow.
+    1.  Make sure the backend is running.
+    2.  Open the frontend in your browser.
+    3.  Log in with your account.
+    4.  Go to the profile builder page and create a profile.
+    5.  Check if your profile is displayed correctly on the profile page.
+    6.  Edit your profile and check if the changes are saved.
   - Post-sprint:
     - Commit the changes and push to `main`.
 

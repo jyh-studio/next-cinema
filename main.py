@@ -262,7 +262,10 @@ async def signup(user: UserCreate):
     user_data = User(
         email=user.email,
         password_hash=hashed_password,
-        name=user.name
+        name=user.name,
+        is_member=False,
+        profile_completed=False,
+        created_at=datetime.utcnow()
     )
     await users_collection.insert_one(user_data.model_dump())
     access_token = create_access_token(data={"sub": user.email})
@@ -293,33 +296,30 @@ async def logout():
     return {"message": "Logged out"}
 
 # Dependency
-async def get_current_user(token: str):
+async def get_current_user(token: str = Depends(oauth2_scheme)):
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         email: str = payload.get("sub")
         if email is None:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid credentials",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
+            raise credentials_exception
         user = await get_user(email)
         if user is None:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid credentials",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
+            raise credentials_exception
         return user
     except jwt.PyJWTError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid credentials",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+        raise credentials_exception
+
+from fastapi.security import OAuth2PasswordBearer
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
 
 # Protected route
-@app.get("/api/v1/users/me")
+@app.get("/api/v1/users/me", response_model=User)
 async def read_users_me(current_user: User = Depends(get_current_user)):
     return current_user
 
