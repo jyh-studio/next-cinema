@@ -248,8 +248,23 @@
     - Repository exists on GitHub with `main` as default.
   - Manual Test Checklist (Frontend):
     - Set `MONGODB_URI`, start backend, open the app, hit a page that triggers `/healthz`, confirm success in UI/Network.
+  - Manual Test Checklist (Frontend):
+    1.  Set the `MONGODB_URI` environment variable.
+    2.  Start the backend using the command `uvicorn main:app --reload`.
+    3.  Open the frontend in a browser at `http://localhost:5137/`.
+    4.  Navigate to the `/login` page.
+    5.  Enter valid email and password credentials and click the "Login" button.
+    6.  Verify that the user is successfully logged in and redirected to a protected page (e.g., `/profile`).
+    7.  Navigate to the `/signup` page.
+    8.  Enter valid email, password, and name credentials and click the "Signup" button.
+    9.  Verify that the user is successfully signed up and redirected to a protected page.
+    10. Open the browser's developer tools and inspect the Network tab to confirm that the frontend is making API calls to the backend endpoints (`/api/v1/auth/login` and `/api/v1/auth/signup`).
   - User Test Prompt:
-    - Short steps to verify frontend↔backend connectivity and DB status.
+    1.  Make sure the backend is running.
+    2.  Open the frontend in your browser.
+    3.  Try to log in with your existing credentials.
+    4.  If you don't have an account, sign up for a new one.
+    5.  Check if you can access the profile page after logging in/signing up.
   - Post-sprint:
     - Commit any changes and push to `main`.
 
