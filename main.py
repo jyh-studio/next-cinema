@@ -2,6 +2,7 @@ from fastapi import FastAPI, Depends, HTTPException, status, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from pymongo import MongoClient
 from pymongo.errors import ConnectionFailure, DuplicateKeyError
 from typing import Optional
@@ -18,6 +19,9 @@ app = FastAPI()
 
 # Mount static files for serving uploaded content
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
+
+# Mount static files for serving worksheets
+app.mount("/worksheets", StaticFiles(directory="worksheets"), name="worksheets")
 
 # Configuration
 SECRET_KEY = os.environ.get("JWT_SECRET", "your-secret-key-change-in-production")
@@ -1684,3 +1688,95 @@ async def get_user_progress_endpoint(current_user: UserResponse = Depends(get_cu
         "total_guides": total_guides,
         "progress_percentage": progress_percentage
     }
+
+# Worksheet endpoints
+@app.get("/api/v1/worksheets")
+async def get_worksheets(current_user: UserResponse = Depends(get_current_user)):
+    """Get available worksheets (Members only)"""
+    # Check membership
+    check_membership(current_user)
+    
+    # Define worksheet structure matching frontend
+    worksheets = {
+        "resume": {
+            "title": "📄 Resume Builder",
+            "description": "Create a professional acting resume",
+            "items": [
+                {"id": "personal-information", "name": "Personal information and contact details", "filename": "personal-information.pdf"},
+                {"id": "training-education", "name": "Training and education section", "filename": "training-education.pdf"},
+                {"id": "stage-experience", "name": "Stage experience listing", "filename": "stage-experience.pdf"},
+                {"id": "film-tv-credits", "name": "Film and TV credits", "filename": "film-tv-credits.pdf"},
+                {"id": "special-skills", "name": "Special skills and abilities", "filename": "special-skills.pdf"},
+                {"id": "professional-references", "name": "Professional references", "filename": "professional-references.pdf"},
+            ]
+        },
+        "headshots": {
+            "title": "📸 Headshot Prep",
+            "description": "Everything for a successful headshot session",
+            "items": [
+                {"id": "wardrobe-selection", "name": "Wardrobe selection checklist", "filename": "wardrobe-selection.pdf"},
+                {"id": "makeup-grooming", "name": "Makeup and grooming guidelines", "filename": "makeup-grooming.pdf"},
+                {"id": "photographer-research", "name": "Photographer research template", "filename": "photographer-research.pdf"},
+                {"id": "shot-list-planning", "name": "Shot list planning worksheet", "filename": "shot-list-planning.pdf"},
+                {"id": "budget-planning", "name": "Budget planning calculator", "filename": "budget-planning.pdf"},
+                {"id": "post-session-evaluation", "name": "Post-session evaluation form", "filename": "post-session-evaluation.pdf"},
+            ]
+        },
+        "demo-reel": {
+            "title": "🎬 Demo Reel Planning",
+            "description": "Plan and create a compelling demo reel",
+            "items": [
+                {"id": "scene-selection", "name": "Scene selection criteria", "filename": "scene-selection.pdf"},
+                {"id": "reel-structure", "name": "Reel structure template", "filename": "reel-structure.pdf"},
+                {"id": "technical-requirements", "name": "Technical requirements checklist", "filename": "technical-requirements.pdf"},
+                {"id": "editing-timeline", "name": "Editing timeline planner", "filename": "editing-timeline.pdf"},
+                {"id": "music-sound", "name": "Music and sound guidelines", "filename": "music-sound.pdf"},
+                {"id": "distribution-strategy", "name": "Distribution strategy worksheet", "filename": "distribution-strategy.pdf"},
+            ]
+        },
+        "profile": {
+            "title": "✨ Profile Optimization",
+            "description": "Maximize your online presence",
+            "items": [
+                {"id": "bio-writing", "name": "Bio writing template", "filename": "bio-writing.pdf"},
+                {"id": "social-media-audit", "name": "Social media audit checklist", "filename": "social-media-audit.pdf"},
+                {"id": "professional-photo", "name": "Professional photo inventory", "filename": "professional-photo.pdf"},
+                {"id": "skills-assessment", "name": "Skills assessment worksheet", "filename": "skills-assessment.pdf"},
+                {"id": "goal-setting", "name": "Goal setting framework", "filename": "goal-setting.pdf"},
+                {"id": "progress-tracking", "name": "Progress tracking dashboard", "filename": "progress-tracking.pdf"},
+            ]
+        }
+    }
+    
+    return worksheets
+
+@app.get("/api/v1/worksheets/{category}/{item_id}")
+async def download_worksheet(category: str, item_id: str, current_user: UserResponse = Depends(get_current_user)):
+    """Download a specific worksheet (Members only)"""
+    # Check membership
+    check_membership(current_user)
+    
+    # Validate category
+    valid_categories = ["resume", "headshots", "demo-reel", "profile"]
+    if category not in valid_categories:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Category not found"
+        )
+    
+    # Construct file path
+    file_path = Path(f"worksheets/{category}/{item_id}.pdf")
+    
+    # Check if file exists
+    if not file_path.exists():
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Worksheet not found"
+        )
+    
+    # Return file for download
+    return FileResponse(
+        path=file_path,
+        filename=f"{item_id}.pdf",
+        media_type="application/pdf"
+    )
