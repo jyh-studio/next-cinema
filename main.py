@@ -13,7 +13,9 @@ from datetime import datetime, timedelta
 import os
 import uuid
 import shutil
+import requests
 from pathlib import Path
+from dotenv import load_dotenv
 
 app = FastAPI()
 
@@ -256,6 +258,29 @@ class UserProgress(BaseModel):
     video_guide_id: str
     completed: bool
     completed_at: Optional[datetime] = None
+
+# News Models
+class NewsArticleResponse(BaseModel):
+    id: str
+    title: str
+    summary: str
+    source: str
+    url: str
+    image_url: Optional[str] = None
+    category: str
+    published_at: datetime
+    fetched_at: datetime
+    ai_insights: Optional[str] = None
+
+class NewsArticleCreate(BaseModel):
+    title: str
+    summary: str
+    source: str
+    url: str
+    image_url: Optional[str] = None
+    category: str = "entertainment"
+    published_at: datetime
+    ai_insights: Optional[str] = None
 
 # Database connection
 def get_db():
@@ -686,6 +711,117 @@ def get_user_completed_guides(db, user_id: str):
     except Exception as e:
         print(f"Error fetching user progress: {e}")
         return []
+
+# News helper functions
+def create_news_article(db, article_data: dict) -> Optional[str]:
+    news_collection = db.news_articles
+    try:
+        # Create unique index on URL if it doesn't exist
+        news_collection.create_index("url", unique=True)
+        result = news_collection.insert_one(article_data)
+        return str(result.inserted_id)
+    except Exception as e:
+        print(f"Error creating news article: {e}")
+        return None
+
+def get_news_articles(db, skip: int = 0, limit: int = 20, category: Optional[str] = None):
+    news_collection = db.news_articles
+    try:
+        # Build query filter
+        query = {}
+        if category:
+            query["category"] = category
+        
+        articles = news_collection.find(query).sort("published_at", -1).skip(skip).limit(limit)
+        return list(articles)
+    except Exception as e:
+        print(f"Error fetching news articles: {e}")
+        return []
+
+def get_news_article_by_id(db, article_id: str):
+    news_collection = db.news_articles
+    from bson import ObjectId
+    try:
+        return news_collection.find_one({"_id": ObjectId(article_id)})
+    except:
+        return None
+
+def fetch_news_from_api(api_key: str, query: str = "acting OR actor OR actress OR film industry", page_size: int = 20) -> list:
+    """Fetch news from NewsAPI.org"""
+    try:
+        url = "https://newsapi.org/v2/everything"
+        params = {
+            "q": query,
+            "domains": "variety.com,hollywoodreporter.com,deadline.com,imdb.com,backstage.com",
+            "language": "en",
+            "sortBy": "publishedAt",
+            "pageSize": page_size,
+            "apiKey": api_key
+        }
+        
+        response = requests.get(url, params=params)
+        response.raise_for_status()
+        
+        data = response.json()
+        return data.get("articles", [])
+    except Exception as e:
+        print(f"Error fetching news from API: {e}")
+        return []
+
+def process_and_store_news_articles(db, articles: list) -> int:
+    """Process and store news articles from API response"""
+    stored_count = 0
+    
+    for article in articles:
+        try:
+            # Skip articles without required fields
+            if not article.get("title") or not article.get("url"):
+                continue
+            
+            # Prepare article data
+            article_data = {
+                "title": article["title"],
+                "summary": article.get("description", "")[:500],  # Limit summary length
+                "source": article.get("source", {}).get("name", "Unknown"),
+                "url": article["url"],
+                "image_url": article.get("urlToImage"),
+                "category": "entertainment",
+                "published_at": datetime.fromisoformat(article["publishedAt"].replace("Z", "+00:00")),
+                "fetched_at": datetime.utcnow(),
+                "ai_insights": None  # Will be populated later with AI analysis
+            }
+            
+            # Try to store the article
+            if create_news_article(db, article_data):
+                stored_count += 1
+        except Exception as e:
+            print(f"Error processing article: {e}")
+            continue
+    
+    return stored_count
+
+def generate_ai_insights(article_title: str, article_summary: str) -> str:
+    """Generate AI insights for an article (placeholder for now)"""
+    # This is a placeholder - in a real implementation, you would use an AI service
+    # like OpenAI GPT, Google's AI, or similar to generate insights
+    insights = []
+    
+    # Simple keyword-based insights
+    content = f"{article_title} {article_summary}".lower()
+    
+    if any(word in content for word in ["casting", "audition", "role"]):
+        insights.append("This could present new opportunities for actors seeking roles.")
+    
+    if any(word in content for word in ["streaming", "netflix", "hulu", "amazon"]):
+        insights.append("Streaming platforms continue to drive demand for diverse content.")
+    
+    if any(word in content for word in ["self-tape", "virtual", "remote"]):
+        insights.append("The industry continues to embrace remote audition processes.")
+    
+    if any(word in content for word in ["diversity", "inclusion", "representation"]):
+        insights.append("Industry focus on diversity creates more opportunities for underrepresented actors.")
+    
+    return " ".join(insights) if insights else "Stay informed about industry trends that may impact your career."
 
 # Membership check helper
 def check_membership(current_user: UserResponse):
@@ -1780,3 +1916,148 @@ async def download_worksheet(category: str, item_id: str, current_user: UserResp
         filename=f"{item_id}.pdf",
         media_type="application/pdf"
     )
+
+# News endpoints
+@app.get("/api/v1/news", response_model=list[NewsArticleResponse])
+async def get_news_articles_endpoint(
+    skip: int = 0,
+    limit: int = 20,
+    category: Optional[str] = None,
+    current_user: UserResponse = Depends(get_current_user)
+):
+    """Get news articles (Members only)"""
+    db = get_db()
+    
+    # Check membership
+    check_membership(current_user)
+    
+    # Get articles
+    articles = get_news_articles(db, skip, limit, category)
+    
+    # Convert to response format
+    article_responses = []
+    for article in articles:
+        article_response = NewsArticleResponse(
+            id=str(article["_id"]),
+            title=article["title"],
+            summary=article["summary"],
+            source=article["source"],
+            url=article["url"],
+            image_url=article.get("image_url"),
+            category=article["category"],
+            published_at=article["published_at"],
+            fetched_at=article["fetched_at"],
+            ai_insights=article.get("ai_insights")
+        )
+        article_responses.append(article_response)
+    
+    return article_responses
+
+@app.get("/api/v1/news/{article_id}", response_model=NewsArticleResponse)
+async def get_news_article_endpoint(article_id: str, current_user: UserResponse = Depends(get_current_user)):
+    """Get a specific news article (Members only)"""
+    db = get_db()
+    
+    # Check membership
+    check_membership(current_user)
+    
+    article = get_news_article_by_id(db, article_id)
+    if not article:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="News article not found"
+        )
+    
+    return NewsArticleResponse(
+        id=str(article["_id"]),
+        title=article["title"],
+        summary=article["summary"],
+        source=article["source"],
+        url=article["url"],
+        image_url=article.get("image_url"),
+        category=article["category"],
+        published_at=article["published_at"],
+        fetched_at=article["fetched_at"],
+        ai_insights=article.get("ai_insights")
+    )
+
+@app.post("/api/v1/news/fetch")
+async def fetch_news_endpoint(current_user: UserResponse = Depends(get_current_user)):
+    """Manually fetch news from external API (Admin only for now)"""
+    db = get_db()
+    
+    # Check membership (can be enhanced with admin role later)
+    check_membership(current_user)
+    
+    # Get API key from environment
+    news_api_key = os.environ.get("NEWS_API_KEY")
+    if not news_api_key:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="News API key not configured"
+        )
+    
+    # Fetch articles from external API
+    articles = fetch_news_from_api(news_api_key)
+    if not articles:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to fetch news from external API"
+        )
+    
+    # Process and store articles
+    stored_count = process_and_store_news_articles(db, articles)
+    
+    return {
+        "message": f"Successfully fetched and stored {stored_count} news articles",
+        "fetched_count": len(articles),
+        "stored_count": stored_count
+    }
+
+@app.post("/api/v1/news", response_model=dict)
+async def create_news_article_endpoint(article_data: NewsArticleCreate, current_user: UserResponse = Depends(get_current_user)):
+    """Create a news article manually (Admin only for now)"""
+    db = get_db()
+    
+    # Check membership (can be enhanced with admin role later)
+    check_membership(current_user)
+    
+    # Prepare article data
+    article_dict = article_data.dict()
+    article_dict.update({
+        "fetched_at": datetime.utcnow()
+    })
+    
+    # Generate AI insights if not provided
+    if not article_dict.get("ai_insights"):
+        article_dict["ai_insights"] = generate_ai_insights(
+            article_dict["title"],
+            article_dict["summary"]
+        )
+    
+    # Create article
+    article_id = create_news_article(db, article_dict)
+    if not article_id:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to create news article"
+        )
+    
+    return {"id": article_id}
+
+@app.get("/api/v1/news/categories")
+async def get_news_categories(current_user: UserResponse = Depends(get_current_user)):
+    """Get available news categories"""
+    # Check membership
+    check_membership(current_user)
+    
+    return {
+        "categories": [
+            {"value": "entertainment", "label": "Entertainment"},
+            {"value": "film", "label": "Film Industry"},
+            {"value": "television", "label": "Television"},
+            {"value": "streaming", "label": "Streaming"},
+            {"value": "casting", "label": "Casting News"},
+            {"value": "awards", "label": "Awards & Recognition"}
+        ]
+    }
