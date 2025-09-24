@@ -304,6 +304,14 @@ def get_user_by_email(db, email: str):
     users_collection = db.users
     return users_collection.find_one({"email": email})
 
+def get_user_by_id(db, user_id: str):
+    users_collection = db.users
+    from bson import ObjectId
+    try:
+        return users_collection.find_one({"_id": ObjectId(user_id)})
+    except:
+        return None
+
 def create_user(db, user_data: dict) -> bool:
     users_collection = db.users
     try:
@@ -1055,11 +1063,53 @@ async def get_user_profile(user_id: str, current_user: UserResponse = Depends(ge
     """Get profile by user ID - useful for getting current user's profile"""
     db = get_db()
     
-    profile = get_profile_by_user_id(db, user_id)
-    if not profile:
+    # First check if the user exists
+    user = get_user_by_id(db, user_id)
+    if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Profile not found"
+            detail="User not found"
+        )
+    
+    profile = get_profile_by_user_id(db, user_id)
+    
+    # If user exists but has no profile, create a default profile response
+    if not profile:
+        from bson import ObjectId
+        current_time = datetime.utcnow()
+        return ProfileResponse(
+            id="",  # No profile ID since it doesn't exist
+            user_id=str(user["_id"]),
+            name=user["name"],
+            pronouns=None,
+            age_range="Not specified",
+            location="Not specified",
+            willing_to_relocate=False,
+            height=None,
+            build=None,
+            eye_color=None,
+            hair_color=None,
+            ethnicity=None,
+            acting_schools=[],
+            workshops=[],
+            coaches=[],
+            stage_experience=False,
+            film_experience=False,
+            special_skills=[],
+            union_status=None,
+            preferred_genres=[],
+            career_goals=None,
+            headshots=[],
+            resume=None,
+            demo_reel=None,
+            social_links=[],
+            bio="This user has not created a profile yet.",
+            tagline=None,
+            is_public=True,
+            completion_percentage=0,
+            profile_url=None,
+            created_at=current_time,
+            updated_at=current_time
         )
     
     # Check if profile is public or belongs to current user
