@@ -5,7 +5,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
-import { showError } from '@/utils/toast';
+import { showError, showSuccess } from '@/utils/toast';
+import { authUtils } from '@/utils/auth';
 import { Film, ArrowRight } from 'lucide-react';
 import Navigation from '@/components/Navigation';
 
@@ -38,12 +39,10 @@ const Signup = () => {
 
     try {
       // For testing purposes, create account directly
-      const { authUtils } = await import('@/utils/auth');
       const user = await authUtils.signup(formData.email, formData.password, formData.name);
       
       if (user) {
         // Show success message and navigate to community
-        const { showSuccess } = await import('@/utils/toast');
         showSuccess('Account created successfully! Welcome to Next Cinema Playground! 🎉');
         navigate('/community');
       } else {
