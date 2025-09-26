@@ -41,7 +41,7 @@ const News = () => {
         return;
       }
 
-      const response = await fetch('http://localhost:8001/api/v1/news', {
+      const response = await fetch('https://next-cinema-backend.onrender.com/api/v1/news', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
@@ -73,7 +73,7 @@ const News = () => {
       }
 
       // First try to fetch new articles from external API
-      const fetchResponse = await fetch('http://localhost:8001/api/v1/news/fetch', {
+      const fetchResponse = await fetch('https://next-cinema-backend.onrender.com/api/v1/news/fetch', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

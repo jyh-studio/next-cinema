@@ -1,7 +1,7 @@
 const API_BASE_URL = '/api/v1';
 
 // Backend base URL for media files
-const BACKEND_BASE_URL = 'http://localhost:8001';
+const BACKEND_BASE_URL = 'https://next-cinema-backend.onrender.com';
 
 // Utility function to get full media URL
 export const getMediaUrl = (relativePath: string | null | undefined): string | null => {

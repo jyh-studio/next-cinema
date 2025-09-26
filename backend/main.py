@@ -46,6 +46,9 @@ origins = [
     "http://127.0.0.1:5173",  # Alternative localhost format
     "http://localhost:5137",  # Backup port
     "http://127.0.0.1:5137",  # Backup port alternative
+    "https://next-cinema-frontend.vercel.app",  # Production frontend (if using Vercel)
+    "https://next-cinema-frontend.netlify.app",  # Production frontend (if using Netlify)
+    "*"  # Allow all origins for production (can be restricted later)
 ]
 
 app.add_middleware(
