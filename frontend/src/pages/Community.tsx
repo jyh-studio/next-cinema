@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -37,12 +37,7 @@ const Community = () => {
   const [showComments, setShowComments] = useState<{[postId: string]: boolean}>({});
   const user = authUtils.getCurrentUser();
 
-  // Load posts on component mount
-  useEffect(() => {
-    initializeAndLoadPosts();
-  }, []);
-
-  const initializeAndLoadPosts = async () => {
+  const initializeAndLoadPosts = useCallback(async () => {
     try {
       setIsLoading(true);
       
@@ -58,7 +53,12 @@ const Community = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
+
+  // Load posts on component mount
+  useEffect(() => {
+    initializeAndLoadPosts();
+  }, [initializeAndLoadPosts]);
 
   const loadPosts = async () => {
     try {
@@ -328,7 +328,7 @@ const Community = () => {
                         variant={selectedType === type.value ? "default" : "outline"}
                         size="sm"
                         onClick={() => {
-                          setSelectedType(type.value as any);
+                          setSelectedType(type.value as 'text' | 'monologue' | 'reel' | 'headshot' | 'resume');
                           // Clear file when switching to text only
                           if (!type.requiresFile) {
                             setUploadedFile(null);

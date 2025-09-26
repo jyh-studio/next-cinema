@@ -179,6 +179,20 @@ export const authApi = {
   getUserProfile: async (userId: string) => {
     return apiRequest(`/profiles/user/${userId}`);
   },
+
+  createProfile: async (profileData: Record<string, unknown>) => {
+    return apiRequest('/profiles', {
+      method: 'POST',
+      body: JSON.stringify(profileData),
+    });
+  },
+
+  updateProfile: async (profileId: string, profileData: Record<string, unknown>) => {
+    return apiRequest(`/profiles/${profileId}`, {
+      method: 'PUT',
+      body: JSON.stringify(profileData),
+    });
+  },
 };
 
 // Worksheet API functions

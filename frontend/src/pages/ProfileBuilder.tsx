@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { ChevronLeft, ChevronRight, Upload, Sparkles, User, Camera, GraduationCap, Heart, Star } from 'lucide-react';
 import Navigation from '@/components/Navigation';
 import { authUtils } from '@/utils/auth';
+import { authApi } from '@/utils/api';
 import { showSuccess, showError } from '@/utils/toast';
 import { Profile } from '@/types';
 
@@ -51,7 +52,7 @@ const ProfileBuilder = () => {
     isPublic: true,
   });
 
-  const updateProfileData = (field: string, value: any) => {
+  const updateProfileData = (field: string, value: string | boolean | string[]) => {
     setProfileData(prev => ({ ...prev, [field]: value }));
   };
 
@@ -82,31 +83,36 @@ const ProfileBuilder = () => {
     }
   };
 
-  const handleSubmit = () => {
-    // Generate AI-powered bio and tagline
-    const generatedBio = `${profileData.name} is a passionate ${profileData.ageRange?.replace('-', ' to ')} year old actor based in ${profileData.location}. With training from ${profileData.actingSchools?.join(', ') || 'various institutions'} and experience in ${profileData.stageExperience && profileData.filmExperience ? 'both stage and screen' : profileData.stageExperience ? 'theater' : 'film and television'}, they bring ${profileData.specialSkills?.length ? `special skills including ${profileData.specialSkills.slice(0, 3).join(', ')}` : 'dedication and authenticity'} to every role.`;
-    
-    const generatedTagline = profileData.careerGoals?.split('.')[0] || 'Bringing authenticity and passion to every performance';
+  const handleSubmit = async () => {
+    try {
+      // Generate AI-powered bio and tagline
+      const generatedBio = `${profileData.name} is a passionate ${profileData.ageRange?.replace('-', ' to ')} year old actor based in ${profileData.location}. With training from ${profileData.actingSchools?.join(', ') || 'various institutions'} and experience in ${profileData.stageExperience && profileData.filmExperience ? 'both stage and screen' : profileData.stageExperience ? 'theater' : 'film and television'}, they bring ${profileData.specialSkills?.length ? `special skills including ${profileData.specialSkills.slice(0, 3).join(', ')}` : 'dedication and authenticity'} to every role.`;
+      
+      const generatedTagline = profileData.careerGoals?.split('.')[0] || 'Bringing authenticity and passion to every performance';
 
-    const completeProfile: Profile = {
-      ...profileData as Profile,
-      id: Date.now().toString(),
-      bio: generatedBio,
-      tagline: generatedTagline,
-      profileUrl: profileData.name?.toLowerCase().replace(/\s+/g, '-') || 'actor-profile',
-      completionPercentage: 95,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
+      const completeProfile = {
+        ...profileData,
+        bio: generatedBio,
+        tagline: generatedTagline,
+        profileUrl: profileData.name?.toLowerCase().replace(/\s+/g, '-') || 'actor-profile',
+        completionPercentage: 95,
+      };
 
-    // Save profile to localStorage (in real app, this would be an API call)
-    localStorage.setItem('user_profile', JSON.stringify(completeProfile));
-    
-    // Update user as having completed profile
-    authUtils.updateUser({ profileCompleted: true });
-    
-    showSuccess('Profile created successfully! Welcome to the community! 🎉');
-    navigate('/profile');
+      // Save profile to backend API
+      await authApi.createProfile(completeProfile);
+      
+      // Clear localStorage cache
+      localStorage.removeItem('user_profile');
+      
+      // Update user as having completed profile
+      authUtils.updateUser({ profileCompleted: true });
+      
+      showSuccess('Profile created successfully! Welcome to the community! 🎉');
+      navigate('/profile');
+    } catch (error) {
+      console.error('Error creating profile:', error);
+      showError('Failed to create profile. Please try again.');
+    }
   };
 
   const progress = (currentStep / totalSteps) * 100;

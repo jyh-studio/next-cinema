@@ -9,18 +9,54 @@ import { Edit, Share, ExternalLink, MapPin, Calendar, Award, Users, Brain, Spark
 import Navigation from '@/components/Navigation';
 import { Profile } from '@/types';
 import { authUtils } from '@/utils/auth';
+import { authApi } from '@/utils/api';
+import { showError } from '@/utils/toast';
 
 const ProfilePage = () => {
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const user = authUtils.getCurrentUser();
 
   useEffect(() => {
-    // Load profile from localStorage (in real app, this would be an API call)
-    const savedProfile = localStorage.getItem('user_profile');
-    if (savedProfile) {
-      setProfile(JSON.parse(savedProfile));
-    }
-  }, []);
+    const loadProfile = async () => {
+      if (!user?.id) {
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        setIsLoading(true);
+        const profileData = await authApi.getUserProfile(user.id);
+        setProfile(profileData);
+      } catch (error) {
+        console.error('Error loading profile:', error);
+        // Fallback to localStorage for backward compatibility
+        const savedProfile = localStorage.getItem('user_profile');
+        if (savedProfile) {
+          setProfile(JSON.parse(savedProfile));
+        } else {
+          showError('Failed to load profile');
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadProfile();
+  }, [user?.id]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50">
+        <Navigation />
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
+          <h1 className="text-2xl font-bold text-gray-900 mb-4">Loading Profile...</h1>
+          <p className="text-gray-600">Please wait while we fetch your profile data.</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!profile) {
     return (
