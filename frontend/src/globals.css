@@ -1,0 +1,242 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+@layer base {
+  :root {
+    --background: 45 23% 97%;
+    --foreground: 25 25% 15%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 25 25% 15%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 25 25% 15%;
+
+    --primary: 289 64% 37%;
+    --primary-foreground: 0 0% 98%;
+
+    --secondary: 35 25% 90%;
+    --secondary-foreground: 25 25% 15%;
+
+    --muted: 35 15% 92%;
+    --muted-foreground: 25 15% 45%;
+
+    --accent: 25 45% 85%;
+    --accent-foreground: 25 25% 15%;
+
+    --destructive: 0 65% 55%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 35 20% 88%;
+    --input: 35 20% 88%;
+    --ring: 289 64% 37%;
+
+    --radius: 0.75rem;
+
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 25 25% 15%;
+    --sidebar-primary: 289 64% 37%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 35 25% 90%;
+    --sidebar-accent-foreground: 25 25% 15%;
+    --sidebar-border: 35 20% 88%;
+    --sidebar-ring: 289 64% 37%;
+
+    /* Bold Wes Anderson inspired color palette with vibrant purple */
+    --dusty-pink: 289 64% 37%;
+    --sage-green: 95 45% 55%;
+    --mustard-yellow: 45 85% 65%;
+    --soft-coral: 15 75% 68%;
+    --muted-teal: 180 45% 55%;
+    --powder-blue: 210 75% 62%;
+    --turquoise: 175 75% 55%;
+    --cream: 45 40% 90%;
+    --warm-beige: 35 35% 80%;
+    --vintage-brown: 25 45% 35%;
+    --soft-gray: 220 15% 70%;
+    --pale-lavender: 280 35% 75%;
+    --vibrant-orange: 289 64% 37%;
+  }
+
+  .dark {
+    --background: 25 25% 8%;
+    --foreground: 45 23% 95%;
+
+    --card: 25 25% 10%;
+    --card-foreground: 45 23% 95%;
+
+    --popover: 25 25% 10%;
+    --popover-foreground: 45 23% 95%;
+
+    --primary: 289 64% 37%;
+    --primary-foreground: 25 25% 8%;
+
+    --secondary: 25 15% 15%;
+    --secondary-foreground: 45 23% 95%;
+
+    --muted: 25 15% 15%;
+    --muted-foreground: 45 10% 65%;
+
+    --accent: 25 15% 15%;
+    --accent-foreground: 45 23% 95%;
+
+    --destructive: 0 65% 55%;
+    --destructive-foreground: 45 23% 95%;
+
+    --border: 25 15% 15%;
+    --input: 25 15% 15%;
+    --ring: 289 64% 37%;
+
+    --vibrant-orange: 289 64% 37%;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+    font-feature-settings: 'cv11', 'ss01';
+    font-variation-settings: 'opsz' 32;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-semibold;
+    letter-spacing: -0.025em;
+  }
+
+  /* Bold Wes Anderson color classes */
+  .dusty-pink {
+    background-color: hsl(var(--dusty-pink));
+  }
+
+  .sage-green {
+    background-color: hsl(var(--sage-green));
+  }
+
+  .mustard-yellow {
+    background-color: hsl(var(--mustard-yellow));
+  }
+
+  .soft-coral {
+    background-color: hsl(var(--soft-coral));
+  }
+
+  .muted-teal {
+    background-color: hsl(var(--muted-teal));
+  }
+
+  .powder-blue {
+    background-color: hsl(var(--powder-blue));
+  }
+
+  .turquoise {
+    background-color: hsl(var(--turquoise));
+  }
+
+  .cream {
+    background-color: hsl(var(--cream));
+  }
+
+  .warm-beige {
+    background-color: hsl(var(--warm-beige));
+  }
+
+  .vintage-brown {
+    background-color: hsl(var(--vintage-brown));
+  }
+
+  .soft-gray {
+    background-color: hsl(var(--soft-gray));
+  }
+
+  .pale-lavender {
+    background-color: hsl(var(--pale-lavender));
+  }
+
+  .vibrant-orange {
+    background-color: hsl(var(--vibrant-orange));
+  }
+
+  /* Text colors */
+  .text-dusty-pink {
+    color: hsl(var(--dusty-pink));
+  }
+
+  .text-sage-green {
+    color: hsl(var(--sage-green));
+  }
+
+  .text-mustard-yellow {
+    color: hsl(var(--mustard-yellow));
+  }
+
+  .text-soft-coral {
+    color: hsl(var(--soft-coral));
+  }
+
+  .text-muted-teal {
+    color: hsl(var(--muted-teal));
+  }
+
+  .text-powder-blue {
+    color: hsl(var(--powder-blue));
+  }
+
+  .text-turquoise {
+    color: hsl(var(--turquoise));
+  }
+
+  .text-vintage-brown {
+    color: hsl(var(--vintage-brown));
+  }
+
+  .text-soft-gray {
+    color: hsl(var(--soft-gray));
+  }
+
+  .text-vibrant-orange {
+    color: hsl(var(--vibrant-orange));
+  }
+
+  /* Border colors */
+  .border-dusty-pink {
+    border-color: hsl(var(--dusty-pink));
+  }
+
+  .border-sage-green {
+    border-color: hsl(var(--sage-green));
+  }
+
+  .border-mustard-yellow {
+    border-color: hsl(var(--mustard-yellow));
+  }
+
+  .border-soft-coral {
+    border-color: hsl(var(--soft-coral));
+  }
+
+  .border-muted-teal {
+    border-color: hsl(var(--muted-teal));
+  }
+
+  .border-powder-blue {
+    border-color: hsl(var(--powder-blue));
+  }
+
+  .border-turquoise {
+    border-color: hsl(var(--turquoise));
+  }
+
+  .border-warm-beige {
+    border-color: hsl(var(--warm-beige));
+  }
+
+  .border-vibrant-orange {
+    border-color: hsl(var(--vibrant-orange));
+  }
+}
