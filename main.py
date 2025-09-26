@@ -17,6 +17,9 @@ import requests
 from pathlib import Path
 from dotenv import load_dotenv
 
+# Load environment variables from .env file
+load_dotenv()
+
 app = FastAPI()
 
 # Mount static files for serving uploaded content
