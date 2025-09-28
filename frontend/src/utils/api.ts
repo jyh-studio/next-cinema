@@ -280,6 +280,14 @@ export const authApi = {
       body: JSON.stringify(profileData),
     });
   },
+
+  getProfileAIInsights: async (profileId: string) => {
+    return apiRequest(`/profiles/${profileId}/ai-insights`);
+  },
+
+  getUserProfileAIInsights: async (userId: string) => {
+    return apiRequest(`/profiles/user/${userId}/ai-insights`);
+  },
 };
 
 // Worksheet API functions
@@ -322,4 +330,37 @@ export const worksheetApi = {
     window.URL.revokeObjectURL(url);
     document.body.removeChild(a);
   }
+};
+
+// News API functions
+export const newsApi = {
+  getNews: async (skip: number = 0, limit: number = 20, category?: string) => {
+    const params = new URLSearchParams({
+      skip: skip.toString(),
+      limit: limit.toString(),
+      ...(category && { category })
+    });
+    return apiRequest(`/news?${params}`);
+  },
+
+  getNewsArticle: async (articleId: string) => {
+    return apiRequest(`/news/${articleId}`);
+  },
+
+  fetchNews: async () => {
+    return apiRequest('/news/fetch', {
+      method: 'POST',
+    });
+  },
+
+  createNewsArticle: async (articleData: Record<string, unknown>) => {
+    return apiRequest('/news', {
+      method: 'POST',
+      body: JSON.stringify(articleData),
+    });
+  },
+
+  getNewsCategories: async () => {
+    return apiRequest('/news/categories');
+  },
 };

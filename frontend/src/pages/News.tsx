@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { ExternalLink, TrendingUp, Sparkles, Zap, Brain, RefreshCw } from 'lucide-react';
 import Navigation from '@/components/Navigation';
 import { authUtils } from '@/utils/auth';
+import { newsApi } from '@/utils/api';
 
 interface NewsArticle {
   id: string;
@@ -35,24 +36,7 @@ const News = () => {
 
   const fetchNews = async () => {
     try {
-      const token = localStorage.getItem('nextcinema_token');
-      if (!token) {
-        setError('Authentication required');
-        return;
-      }
-
-      const response = await fetch('https://next-cinema-backend.onrender.com/api/v1/news', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
+      const data = await newsApi.getNews();
       setArticles(data);
       setError(null);
     } catch (err) {
@@ -66,28 +50,15 @@ const News = () => {
   const refreshNews = async () => {
     setRefreshing(true);
     try {
-      const token = localStorage.getItem('nextcinema_token');
-      if (!token) {
-        setError('Authentication required');
-        return;
-      }
-
       // First try to fetch new articles from external API
-      const fetchResponse = await fetch('https://next-cinema-backend.onrender.com/api/v1/news/fetch', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (fetchResponse.ok) {
-        // If successful, reload the articles
-        await fetchNews();
-      } else {
-        // If fetch fails, just reload existing articles
-        await fetchNews();
+      try {
+        await newsApi.fetchNews();
+      } catch (fetchErr) {
+        console.log('External news fetch failed, loading existing articles');
       }
+      
+      // Reload the articles (whether fetch succeeded or not)
+      await fetchNews();
     } catch (err) {
       console.error('Error refreshing news:', err);
       // Still try to reload existing articles

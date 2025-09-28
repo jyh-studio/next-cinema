@@ -756,6 +756,10 @@ def get_news_article_by_id(db, article_id: str):
 def fetch_news_from_api(api_key: str, query: str = "acting OR actor OR actress OR film industry", page_size: int = 20) -> list:
     """Fetch news from NewsAPI.org"""
     try:
+        # Check if we have a valid API key
+        if not api_key or api_key == "your-news-api-key-here":
+            raise ValueError("No valid NewsAPI key configured")
+        
         url = "https://newsapi.org/v2/everything"
         params = {
             "q": query,
@@ -773,7 +777,8 @@ def fetch_news_from_api(api_key: str, query: str = "acting OR actor OR actress O
         return data.get("articles", [])
     except Exception as e:
         print(f"Error fetching news from API: {e}")
-        return []
+        raise e
+
 
 def process_and_store_news_articles(db, articles: list) -> int:
     """Process and store news articles from API response"""
@@ -829,6 +834,250 @@ def generate_ai_insights(article_title: str, article_summary: str) -> str:
         insights.append("Industry focus on diversity creates more opportunities for underrepresented actors.")
     
     return " ".join(insights) if insights else "Stay informed about industry trends that may impact your career."
+
+# Profile AI Insights helper functions
+def generate_profile_ai_insights(profile_data: dict) -> dict:
+    """Generate AI insights based on profile data"""
+    insights = {
+        "lookalikes": [],
+        "scripts": [],
+        "headshots": [],
+        "careerAdvice": []
+    }
+    
+    # Extract profile information
+    age_range = profile_data.get("age_range", "")
+    eye_color = profile_data.get("eye_color", "")
+    hair_color = profile_data.get("hair_color", "")
+    build = profile_data.get("build", "")
+    ethnicity = profile_data.get("ethnicity", "")
+    preferred_genres = profile_data.get("preferred_genres", [])
+    special_skills = profile_data.get("special_skills", [])
+    stage_experience = profile_data.get("stage_experience", False)
+    film_experience = profile_data.get("film_experience", False)
+    career_goals = profile_data.get("career_goals", "")
+    
+    # Generate lookalike recommendations based on physical attributes and age
+    lookalikes = generate_lookalike_recommendations(age_range, eye_color, hair_color, build, ethnicity)
+    insights["lookalikes"] = lookalikes
+    
+    # Generate script recommendations based on experience and preferences
+    scripts = generate_script_recommendations(preferred_genres, stage_experience, film_experience, age_range)
+    insights["scripts"] = scripts
+    
+    # Generate headshot recommendations based on physical attributes
+    headshots = generate_headshot_recommendations(eye_color, hair_color, build, age_range)
+    insights["headshots"] = headshots
+    
+    # Generate career advice based on experience and goals
+    career_advice = generate_career_advice(stage_experience, film_experience, special_skills, career_goals, age_range)
+    insights["careerAdvice"] = career_advice
+    
+    return insights
+
+def generate_lookalike_recommendations(age_range: str, eye_color: str, hair_color: str, build: str, ethnicity: str) -> list:
+    """Generate actor lookalike recommendations based on physical attributes"""
+    lookalikes = []
+    
+    # Age-based recommendations
+    if "18-25" in age_range or "16-20" in age_range:
+        young_actors = [
+            {"name": "Zendaya", "reason": "Versatile young performer with strong screen presence"},
+            {"name": "Timothée Chalamet", "reason": "Acclaimed young actor with dramatic range"},
+            {"name": "Anya Taylor-Joy", "reason": "Rising star with distinctive features and versatility"},
+            {"name": "Jacob Elordi", "reason": "Popular young actor with strong dramatic skills"}
+        ]
+        lookalikes.extend(young_actors[:2])
+    elif "25-35" in age_range:
+        mid_career_actors = [
+            {"name": "Emma Stone", "reason": "Versatile performer with comedy and drama experience"},
+            {"name": "Michael B. Jordan", "reason": "Strong leading man with action and drama credentials"},
+            {"name": "Margot Robbie", "reason": "Charismatic performer with range across genres"},
+            {"name": "Oscar Isaac", "reason": "Character actor with strong dramatic presence"}
+        ]
+        lookalikes.extend(mid_career_actors[:2])
+    elif "35-50" in age_range:
+        established_actors = [
+            {"name": "Ryan Gosling", "reason": "Established actor with indie and mainstream appeal"},
+            {"name": "Amy Adams", "reason": "Versatile performer with strong dramatic and musical skills"},
+            {"name": "Idris Elba", "reason": "Commanding presence across multiple genres"},
+            {"name": "Cate Blanchett", "reason": "Award-winning actress with incredible range"}
+        ]
+        lookalikes.extend(established_actors[:2])
+    
+    # Add physical attribute-based recommendations
+    if eye_color and hair_color:
+        if eye_color.lower() == "blue" and hair_color.lower() == "blonde":
+            lookalikes.append({"name": "Scarlett Johansson", "reason": f"Similar {eye_color.lower()} eyes and {hair_color.lower()} hair combination"})
+        elif eye_color.lower() == "brown" and hair_color.lower() == "brown":
+            lookalikes.append({"name": "Oscar Isaac", "reason": f"Similar {eye_color.lower()} eyes and {hair_color.lower()} hair combination"})
+    
+    return lookalikes[:3]  # Return top 3 recommendations
+
+def generate_script_recommendations(preferred_genres: list, stage_experience: bool, film_experience: bool, age_range: str) -> list:
+    """Generate script and monologue recommendations"""
+    scripts = []
+    
+    # Genre-based recommendations
+    if "Drama" in preferred_genres:
+        scripts.append({
+            "title": "Contemporary Monologue: 'Rabbit Hole' by David Lindsay-Abaire",
+            "reason": "Perfect for showcasing emotional depth and dramatic range"
+        })
+    
+    if "Comedy" in preferred_genres:
+        scripts.append({
+            "title": "Comedy Scene: 'The Marvelous Mrs. Maisel'",
+            "reason": "Great for demonstrating comedic timing and wit"
+        })
+    
+    if "Horror" in preferred_genres or "Thriller" in preferred_genres:
+        scripts.append({
+            "title": "Suspense Monologue: 'Black Swan'",
+            "reason": "Excellent for showing intensity and psychological depth"
+        })
+    
+    # Experience-based recommendations
+    if stage_experience:
+        scripts.append({
+            "title": "Classical Scene: 'Romeo and Juliet' by Shakespeare",
+            "reason": "Leverage your theater background with classical training"
+        })
+    
+    if film_experience:
+        scripts.append({
+            "title": "Contemporary Film Scene: 'Lady Bird'",
+            "reason": "Modern, relatable content perfect for screen work"
+        })
+    
+    # Age-appropriate recommendations
+    if "18-25" in age_range:
+        scripts.append({
+            "title": "Young Adult Monologue: 'Eighth Grade'",
+            "reason": "Age-appropriate content that showcases youthful authenticity"
+        })
+    
+    return scripts[:3]  # Return top 3 recommendations
+
+def generate_headshot_recommendations(eye_color: str, hair_color: str, build: str, age_range: str) -> list:
+    """Generate headshot styling recommendations"""
+    headshots = []
+    
+    # Eye color specific recommendations
+    if eye_color:
+        if eye_color.lower() in ["blue", "green"]:
+            headshots.append({
+                "tip": "Natural outdoor lighting",
+                "reason": f"Your {eye_color.lower()} eyes will pop beautifully in natural light"
+            })
+        elif eye_color.lower() == "brown":
+            headshots.append({
+                "tip": "Warm studio lighting",
+                "reason": f"Warm tones will enhance your {eye_color.lower()} eyes"
+            })
+    
+    # Hair color recommendations
+    if hair_color:
+        if hair_color.lower() in ["blonde", "light brown"]:
+            headshots.append({
+                "tip": "Soft, diffused lighting",
+                "reason": f"Gentle lighting will complement your {hair_color.lower()} hair"
+            })
+        elif hair_color.lower() in ["black", "dark brown"]:
+            headshots.append({
+                "tip": "High contrast lighting",
+                "reason": f"Strong lighting will create beautiful contrast with your {hair_color.lower()} hair"
+            })
+    
+    # Age-appropriate styling
+    if "18-25" in age_range:
+        headshots.append({
+            "tip": "Fresh, minimal makeup look",
+            "reason": "Showcase your youthful, natural beauty"
+        })
+    elif "25-35" in age_range:
+        headshots.append({
+            "tip": "Professional business casual wardrobe",
+            "reason": "Perfect for your age range and versatile casting opportunities"
+        })
+    
+    # Build-specific recommendations
+    if build:
+        if build.lower() in ["athletic", "muscular"]:
+            headshots.append({
+                "tip": "Action-ready casual look",
+                "reason": f"Highlight your {build.lower()} build for action/adventure roles"
+            })
+    
+    return headshots[:3]  # Return top 3 recommendations
+
+def generate_career_advice(stage_experience: bool, film_experience: bool, special_skills: list, career_goals: str, age_range: str) -> list:
+    """Generate personalized career advice"""
+    advice = []
+    
+    # Experience-based advice
+    if stage_experience and not film_experience:
+        advice.append({
+            "advice": "Transition to on-camera work",
+            "reason": "Your stage experience is valuable - now focus on self-tape skills and screen acting techniques"
+        })
+    elif film_experience and not stage_experience:
+        advice.append({
+            "advice": "Explore theater opportunities",
+            "reason": "Stage work will strengthen your craft and expand your network"
+        })
+    elif stage_experience and film_experience:
+        advice.append({
+            "advice": "Leverage your versatility",
+            "reason": "Your experience in both mediums makes you highly marketable"
+        })
+    
+    # Skills-based advice
+    if special_skills:
+        if any(skill.lower() in ["singing", "music", "piano", "guitar"] for skill in special_skills):
+            advice.append({
+                "advice": "Pursue musical theater and film opportunities",
+                "reason": "Your musical abilities open doors to specialized casting"
+            })
+        
+        if any(skill.lower() in ["martial arts", "stunts", "athletics", "sports"] for skill in special_skills):
+            advice.append({
+                "advice": "Consider action and stunt work",
+                "reason": "Your physical skills are valuable for action productions"
+            })
+        
+        if any(skill.lower() in ["languages", "accents", "dialects"] for skill in special_skills):
+            advice.append({
+                "advice": "Market your linguistic abilities",
+                "reason": "Multilingual actors are in high demand for diverse productions"
+            })
+    
+    # Age-specific advice
+    if "18-25" in age_range:
+        advice.append({
+            "advice": "Build your reel with student films",
+            "reason": "Collaborate with film students to build experience and footage"
+        })
+    elif "25-35" in age_range:
+        advice.append({
+            "advice": "Focus on leading roles",
+            "reason": "You're in the prime age range for protagonist roles"
+        })
+    
+    # Goals-based advice
+    if career_goals:
+        if "television" in career_goals.lower():
+            advice.append({
+                "advice": "Study current TV shows in your demographic",
+                "reason": "Understanding current television trends will help you target the right opportunities"
+            })
+        elif "film" in career_goals.lower():
+            advice.append({
+                "advice": "Attend film festivals and industry events",
+                "reason": "Networking in the film community is crucial for breaking into cinema"
+            })
+    
+    return advice[:3]  # Return top 3 recommendations
 
 # Membership check helper
 def check_membership(current_user: UserResponse):
@@ -1941,6 +2190,24 @@ async def get_news_articles_endpoint(
     # Get articles
     articles = get_news_articles(db, skip, limit, category)
     
+    # If no articles exist, try to fetch from NewsAPI
+    if not articles and skip == 0:
+        print("No articles found in database, fetching from NewsAPI")
+        try:
+            news_api_key = os.environ.get("NEWS_API_KEY", "your-news-api-key-here")
+            fresh_articles = fetch_news_from_api(news_api_key)
+            if fresh_articles:
+                stored_count = process_and_store_news_articles(db, fresh_articles)
+                print(f"Fetched and stored {stored_count} articles from NewsAPI")
+                # Fetch articles again after storing
+                articles = get_news_articles(db, skip, limit, category)
+            else:
+                print("No articles returned from NewsAPI")
+        except Exception as e:
+            print(f"Failed to fetch from NewsAPI: {e}")
+            # Return empty list instead of sample data
+            return []
+    
     # Convert to response format
     article_responses = []
     for article in articles:
@@ -1997,19 +2264,21 @@ async def fetch_news_endpoint(current_user: UserResponse = Depends(get_current_u
     check_membership(current_user)
     
     # Get API key from environment
-    news_api_key = os.environ.get("NEWS_API_KEY")
-    if not news_api_key:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="News API key not configured"
-        )
+    news_api_key = os.environ.get("NEWS_API_KEY", "your-news-api-key-here")
     
     # Fetch articles from external API
-    articles = fetch_news_from_api(news_api_key)
-    if not articles:
+    try:
+        articles = fetch_news_from_api(news_api_key)
+        if not articles:
+            return {
+                "message": "No articles available to fetch",
+                "fetched_count": 0,
+                "stored_count": 0
+            }
+    except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to fetch news from external API"
+            detail=f"Failed to fetch news from API: {str(e)}"
         )
     
     # Process and store articles
@@ -2068,6 +2337,57 @@ async def get_news_categories(current_user: UserResponse = Depends(get_current_u
             {"value": "awards", "label": "Awards & Recognition"}
         ]
     }
+
+# Profile AI Insights endpoints
+@app.get("/api/v1/profiles/{profile_id}/ai-insights")
+async def get_profile_ai_insights(profile_id: str, current_user: UserResponse = Depends(get_current_user)):
+    """Get AI-generated insights for a profile"""
+    db = get_db()
+    
+    # Get the profile
+    profile = get_profile_by_id(db, profile_id)
+    if not profile:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Profile not found"
+        )
+    
+    # Check if profile is public or belongs to current user
+    if not profile.get("is_public", True) and str(profile["user_id"]) != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied to private profile"
+        )
+    
+    # Generate AI insights based on profile data
+    insights = generate_profile_ai_insights(profile)
+    
+    return insights
+
+@app.get("/api/v1/profiles/user/{user_id}/ai-insights")
+async def get_user_profile_ai_insights(user_id: str, current_user: UserResponse = Depends(get_current_user)):
+    """Get AI-generated insights for a user's profile"""
+    db = get_db()
+    
+    # Get the profile by user ID
+    profile = get_profile_by_user_id(db, user_id)
+    if not profile:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Profile not found"
+        )
+    
+    # Check if profile is public or belongs to current user
+    if not profile.get("is_public", True) and str(profile["user_id"]) != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied to private profile"
+        )
+    
+    # Generate AI insights based on profile data
+    insights = generate_profile_ai_insights(profile)
+    
+    return insights
 
 # Add this at the end to make the file runnable directly
 if __name__ == "__main__":

@@ -15,6 +15,11 @@ import { showError } from '@/utils/toast';
 const ProfilePage = () => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  // AI Recommendations state - moved to top to fix hooks order
+  const [aiRecommendations, setAiRecommendations] = useState(null);
+  const [aiInsightsLoading, setAiInsightsLoading] = useState(false);
+  const [aiInsightsError, setAiInsightsError] = useState(null);
+  
   const user = authUtils.getCurrentUser();
 
   useEffect(() => {
@@ -45,6 +50,50 @@ const ProfilePage = () => {
     loadProfile();
   }, [user?.id]);
 
+  // Load AI insights when profile is loaded
+  useEffect(() => {
+    const loadAIInsights = async () => {
+      if (!profile || !user?.id) return;
+
+      try {
+        setAiInsightsLoading(true);
+        setAiInsightsError(null);
+        const insights = await authApi.getUserProfileAIInsights(user.id);
+        setAiRecommendations(insights);
+      } catch (error) {
+        console.error('Error loading AI insights:', error);
+        setAiInsightsError('Failed to load AI insights');
+        // Fallback to basic recommendations if API fails
+        setAiRecommendations({
+          lookalikes: [
+            { name: 'Emma Stone', reason: 'Similar age range and comedic timing potential' },
+            { name: 'Zendaya', reason: 'Versatile performer with similar build and energy' },
+            { name: 'Anya Taylor-Joy', reason: 'Distinctive features and dramatic range' },
+          ],
+          scripts: [
+            { title: 'Contemporary Monologue: "Rabbit Hole"', reason: 'Matches your dramatic interests and age range' },
+            { title: 'Classical Scene: "Romeo and Juliet"', reason: 'Great for showcasing range with your theater background' },
+            { title: 'Comedy Piece: "The Marvelous Mrs. Maisel"', reason: 'Perfect for your comedic timing and energy' },
+          ],
+          headshots: [
+            { tip: 'Natural lighting headshot', reason: 'Your eye color would pop beautifully in natural light' },
+            { tip: 'Professional business casual look', reason: 'Perfect for your age range and versatile casting' },
+            { tip: 'Character-driven shot', reason: 'Show your range with a more dramatic, storytelling headshot' },
+          ],
+          careerAdvice: [
+            { advice: 'Focus on self-tape quality', reason: 'Your training shows you\'re ready for professional opportunities' },
+            { advice: 'Network in your local theater scene', reason: 'Your stage experience is a valuable asset' },
+            { advice: 'Consider commercial work', reason: 'Your look and skills are perfect for commercial casting' },
+          ],
+        });
+      } finally {
+        setAiInsightsLoading(false);
+      }
+    };
+
+    loadAIInsights();
+  }, [profile, user?.id]);
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50">
@@ -74,36 +123,6 @@ const ProfilePage = () => {
       </div>
     );
   }
-
-  // AI Recommendations based on profile data
-  const getAIRecommendations = () => {
-    const recommendations = {
-      lookalikes: [
-        { name: 'Emma Stone', reason: 'Similar age range and comedic timing potential' },
-        { name: 'Zendaya', reason: 'Versatile performer with similar build and energy' },
-        { name: 'Anya Taylor-Joy', reason: 'Distinctive features and dramatic range' },
-      ],
-      scripts: [
-        { title: 'Contemporary Monologue: "Rabbit Hole"', reason: 'Matches your dramatic interests and age range' },
-        { title: 'Classical Scene: "Romeo and Juliet"', reason: 'Great for showcasing range with your theater background' },
-        { title: 'Comedy Piece: "The Marvelous Mrs. Maisel"', reason: 'Perfect for your comedic timing and energy' },
-      ],
-      headshots: [
-        { tip: 'Natural lighting headshot', reason: 'Your eye color would pop beautifully in natural light' },
-        { tip: 'Professional business casual look', reason: 'Perfect for your age range and versatile casting' },
-        { tip: 'Character-driven shot', reason: 'Show your range with a more dramatic, storytelling headshot' },
-      ],
-      careerAdvice: [
-        { advice: 'Focus on self-tape quality', reason: 'Your training shows you\'re ready for professional opportunities' },
-        { advice: 'Network in your local theater scene', reason: 'Your stage experience is a valuable asset' },
-        { advice: 'Consider commercial work', reason: 'Your look and skills are perfect for commercial casting' },
-      ],
-    };
-
-    return recommendations;
-  };
-
-  const aiRecommendations = getAIRecommendations();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50">
@@ -361,87 +380,134 @@ const ProfilePage = () => {
               </TabsContent>
 
               <TabsContent value="ai-insights">
-                <div className="space-y-6">
-                  {/* Actor Lookalikes */}
-                  <Card className="rounded-3xl border-2 border-yellow-200 bg-gradient-to-r from-yellow-50 to-orange-50">
-                    <CardHeader>
-                      <CardTitle className="flex items-center">
-                        <Brain className="h-5 w-5 mr-2 text-orange-600" />
-                        🤖 AI Actor Lookalikes
-                      </CardTitle>
-                      <CardDescription>Based on your physical profile and energy</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-3">
-                        {aiRecommendations.lookalikes.map((actor, index) => (
-                          <div key={index} className="p-4 bg-white rounded-xl border border-orange-200">
-                            <div className="flex items-center justify-between">
-                              <div>
-                                <h4 className="font-bold text-gray-900">{actor.name}</h4>
-                                <p className="text-sm text-gray-600">{actor.reason}</p>
+                {aiInsightsLoading ? (
+                  <div className="space-y-6">
+                    <Card className="rounded-3xl border-2 border-gray-200">
+                      <CardContent className="p-8 text-center">
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
+                        <h3 className="text-lg font-bold text-gray-900 mb-2">Generating AI Insights...</h3>
+                        <p className="text-gray-600">Analyzing your profile to create personalized recommendations</p>
+                      </CardContent>
+                    </Card>
+                  </div>
+                ) : aiInsightsError ? (
+                  <div className="space-y-6">
+                    <Card className="rounded-3xl border-2 border-red-200 bg-gradient-to-r from-red-50 to-pink-50">
+                      <CardContent className="p-8 text-center">
+                        <div className="text-4xl mb-4">⚠️</div>
+                        <h3 className="text-lg font-bold text-red-900 mb-2">Unable to Load AI Insights</h3>
+                        <p className="text-red-700 mb-4">{aiInsightsError}</p>
+                        <Button
+                          onClick={() => window.location.reload()}
+                          variant="outline"
+                          className="border-red-300 text-red-700 hover:bg-red-50"
+                        >
+                          🔄 Try Again
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  </div>
+                ) : aiRecommendations ? (
+                  <div className="space-y-6">
+                    {/* Actor Lookalikes */}
+                    <Card className="rounded-3xl border-2 border-yellow-200 bg-gradient-to-r from-yellow-50 to-orange-50">
+                      <CardHeader>
+                        <CardTitle className="flex items-center">
+                          <Brain className="h-5 w-5 mr-2 text-orange-600" />
+                          🤖 AI Actor Lookalikes
+                        </CardTitle>
+                        <CardDescription>Based on your physical profile and experience</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-3">
+                          {aiRecommendations.lookalikes?.length > 0 ? (
+                            aiRecommendations.lookalikes.map((actor, index) => (
+                              <div key={index} className="p-4 bg-white rounded-xl border border-orange-200">
+                                <div className="flex items-center justify-between">
+                                  <div>
+                                    <h4 className="font-bold text-gray-900">{actor.name}</h4>
+                                    <p className="text-sm text-gray-600">{actor.reason}</p>
+                                  </div>
+                                  <Star className="h-5 w-5 text-yellow-500" />
+                                </div>
                               </div>
-                              <Star className="h-5 w-5 text-yellow-500" />
+                            ))
+                          ) : (
+                            <div className="p-4 bg-white rounded-xl border border-orange-200 text-center">
+                              <p className="text-gray-600">Complete more of your profile to get personalized lookalike recommendations!</p>
                             </div>
-                          </div>
-                        ))}
-                      </div>
-                    </CardContent>
-                  </Card>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
 
-                  {/* Script Recommendations */}
-                  <Card className="rounded-3xl border-2 border-blue-200 bg-gradient-to-r from-blue-50 to-purple-50">
-                    <CardHeader>
-                      <CardTitle className="flex items-center">
-                        <FileText className="h-5 w-5 mr-2 text-blue-600" />
-                        📝 Recommended Scripts & Monologues
-                      </CardTitle>
-                      <CardDescription>Perfect matches for your profile and interests</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-3">
-                        {aiRecommendations.scripts.map((script, index) => (
-                          <div key={index} className="p-4 bg-white rounded-xl border border-blue-200">
-                            <div className="flex items-center justify-between">
-                              <div>
-                                <h4 className="font-bold text-gray-900">{script.title}</h4>
-                                <p className="text-sm text-gray-600">{script.reason}</p>
+                    {/* Script Recommendations */}
+                    <Card className="rounded-3xl border-2 border-blue-200 bg-gradient-to-r from-blue-50 to-purple-50">
+                      <CardHeader>
+                        <CardTitle className="flex items-center">
+                          <FileText className="h-5 w-5 mr-2 text-blue-600" />
+                          📝 Recommended Scripts & Monologues
+                        </CardTitle>
+                        <CardDescription>Perfect matches for your experience and interests</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-3">
+                          {aiRecommendations.scripts?.length > 0 ? (
+                            aiRecommendations.scripts.map((script, index) => (
+                              <div key={index} className="p-4 bg-white rounded-xl border border-blue-200">
+                                <div className="flex items-center justify-between">
+                                  <div>
+                                    <h4 className="font-bold text-gray-900">{script.title}</h4>
+                                    <p className="text-sm text-gray-600">{script.reason}</p>
+                                  </div>
+                                  <Button variant="outline" size="sm">
+                                    📖 View
+                                  </Button>
+                                </div>
                               </div>
-                              <Button variant="outline" size="sm">
-                                📖 View
-                              </Button>
+                            ))
+                          ) : (
+                            <div className="p-4 bg-white rounded-xl border border-blue-200 text-center">
+                              <p className="text-gray-600">Add your preferred genres and experience to get script recommendations!</p>
                             </div>
-                          </div>
-                        ))}
-                      </div>
-                    </CardContent>
-                  </Card>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
 
-                  {/* Headshot Guidance */}
-                  <Card className="rounded-3xl border-2 border-pink-200 bg-gradient-to-r from-pink-50 to-red-50">
-                    <CardHeader>
-                      <CardTitle className="flex items-center">
-                        <Camera className="h-5 w-5 mr-2 text-pink-600" />
-                        📸 Headshot Styling Suggestions
-                      </CardTitle>
-                      <CardDescription>AI-powered recommendations for your next shoot</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-3">
-                        {aiRecommendations.headshots.map((tip, index) => (
-                          <div key={index} className="p-4 bg-white rounded-xl border border-pink-200">
-                            <div className="flex items-center justify-between">
-                              <div>
-                                <h4 className="font-bold text-gray-900">{tip.tip}</h4>
-                                <p className="text-sm text-gray-600">{tip.reason}</p>
+                    {/* Headshot Guidance */}
+                    <Card className="rounded-3xl border-2 border-pink-200 bg-gradient-to-r from-pink-50 to-red-50">
+                      <CardHeader>
+                        <CardTitle className="flex items-center">
+                          <Camera className="h-5 w-5 mr-2 text-pink-600" />
+                          📸 Headshot Styling Suggestions
+                        </CardTitle>
+                        <CardDescription>AI-powered recommendations for your next shoot</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-3">
+                          {aiRecommendations.headshots?.length > 0 ? (
+                            aiRecommendations.headshots.map((tip, index) => (
+                              <div key={index} className="p-4 bg-white rounded-xl border border-pink-200">
+                                <div className="flex items-center justify-between">
+                                  <div>
+                                    <h4 className="font-bold text-gray-900">{tip.tip}</h4>
+                                    <p className="text-sm text-gray-600">{tip.reason}</p>
+                                  </div>
+                                  <Sparkles className="h-5 w-5 text-pink-500" />
+                                </div>
                               </div>
-                              <Sparkles className="h-5 w-5 text-pink-500" />
+                            ))
+                          ) : (
+                            <div className="p-4 bg-white rounded-xl border border-pink-200 text-center">
+                              <p className="text-gray-600">Add your physical attributes to get personalized headshot recommendations!</p>
                             </div>
-                          </div>
-                        ))}
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                ) : null}
               </TabsContent>
             </Tabs>
           </div>
@@ -478,14 +544,25 @@ const ProfilePage = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-3">
-                  {aiRecommendations.careerAdvice.map((advice, index) => (
-                    <div key={index} className="p-3 bg-purple-50 rounded-xl">
-                      <h4 className="font-bold text-purple-900 text-sm">{advice.advice}</h4>
-                      <p className="text-xs text-purple-700 mt-1">{advice.reason}</p>
-                    </div>
-                  ))}
-                </div>
+                {aiInsightsLoading ? (
+                  <div className="text-center py-4">
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-purple-600 mx-auto mb-2"></div>
+                    <p className="text-xs text-gray-600">Loading advice...</p>
+                  </div>
+                ) : aiRecommendations?.careerAdvice?.length > 0 ? (
+                  <div className="space-y-3">
+                    {aiRecommendations.careerAdvice.map((advice, index) => (
+                      <div key={index} className="p-3 bg-purple-50 rounded-xl">
+                        <h4 className="font-bold text-purple-900 text-sm">{advice.advice}</h4>
+                        <p className="text-xs text-purple-700 mt-1">{advice.reason}</p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="p-3 bg-purple-50 rounded-xl text-center">
+                    <p className="text-xs text-purple-700">Complete your profile to get personalized career advice!</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
 
