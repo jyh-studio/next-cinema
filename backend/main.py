@@ -16,6 +16,7 @@ import shutil
 import requests
 from pathlib import Path
 from dotenv import load_dotenv
+from ai_service import AIService
 
 # Load environment variables from .env file
 load_dotenv()
@@ -90,58 +91,154 @@ class UserResponse(BaseModel):
 class ProfileCreate(BaseModel):
     name: str
     pronouns: Optional[str] = None
-    age_range: str
+    age_range: Optional[str] = None
+    ageRange: Optional[str] = None  # Accept camelCase from frontend
     location: str
-    willing_to_relocate: bool = False
+    willing_to_relocate: Optional[bool] = False
+    willingToRelocate: Optional[bool] = None  # Accept camelCase from frontend
     height: Optional[str] = None
     build: Optional[str] = None
     eye_color: Optional[str] = None
+    eyeColor: Optional[str] = None  # Accept camelCase from frontend
     hair_color: Optional[str] = None
+    hairColor: Optional[str] = None  # Accept camelCase from frontend
     ethnicity: Optional[str] = None
     acting_schools: Optional[list[str]] = []
+    actingSchools: Optional[list[str]] = None  # Accept camelCase from frontend
     workshops: Optional[list[str]] = []
     coaches: Optional[list[str]] = []
-    stage_experience: bool = False
-    film_experience: bool = False
+    stage_experience: Optional[bool] = False
+    stageExperience: Optional[bool] = None  # Accept camelCase from frontend
+    film_experience: Optional[bool] = False
+    filmExperience: Optional[bool] = None  # Accept camelCase from frontend
     special_skills: Optional[list[str]] = []
+    specialSkills: Optional[list[str]] = None  # Accept camelCase from frontend
     union_status: Optional[str] = None
+    unionStatus: Optional[str] = None  # Accept camelCase from frontend
     preferred_genres: Optional[list[str]] = []
+    preferredGenres: Optional[list[str]] = None  # Accept camelCase from frontend
     career_goals: Optional[str] = None
+    careerGoals: Optional[str] = None  # Accept camelCase from frontend
     headshots: Optional[list[str]] = []
     resume: Optional[str] = None
     demo_reel: Optional[str] = None
+    demoReel: Optional[str] = None  # Accept camelCase from frontend
     social_links: Optional[list[str]] = []
+    socialLinks: Optional[list[str]] = None  # Accept camelCase from frontend
     bio: Optional[str] = None
     tagline: Optional[str] = None
-    is_public: bool = True
+    is_public: Optional[bool] = True
+    isPublic: Optional[bool] = None  # Accept camelCase from frontend
+    
+    def model_post_init(self, __context) -> None:
+        """Convert camelCase fields to snake_case after validation"""
+        # Handle age_range
+        if self.ageRange and not self.age_range:
+            self.age_range = self.ageRange
+        elif not self.age_range and not self.ageRange:
+            raise ValueError("age_range is required")
+            
+        # Handle other camelCase conversions
+        if self.willingToRelocate is not None and self.willing_to_relocate is None:
+            self.willing_to_relocate = self.willingToRelocate
+        if self.eyeColor and not self.eye_color:
+            self.eye_color = self.eyeColor
+        if self.hairColor and not self.hair_color:
+            self.hair_color = self.hairColor
+        if self.actingSchools and not self.acting_schools:
+            self.acting_schools = self.actingSchools
+        if self.stageExperience is not None and self.stage_experience is None:
+            self.stage_experience = self.stageExperience
+        if self.filmExperience is not None and self.film_experience is None:
+            self.film_experience = self.filmExperience
+        if self.specialSkills and not self.special_skills:
+            self.special_skills = self.specialSkills
+        if self.unionStatus and not self.union_status:
+            self.union_status = self.unionStatus
+        if self.preferredGenres and not self.preferred_genres:
+            self.preferred_genres = self.preferredGenres
+        if self.careerGoals and not self.career_goals:
+            self.career_goals = self.careerGoals
+        if self.demoReel and not self.demo_reel:
+            self.demo_reel = self.demoReel
+        if self.socialLinks and not self.social_links:
+            self.social_links = self.socialLinks
+        if self.isPublic is not None and self.is_public is None:
+            self.is_public = self.isPublic
 
 class ProfileUpdate(BaseModel):
     name: Optional[str] = None
     pronouns: Optional[str] = None
     age_range: Optional[str] = None
+    ageRange: Optional[str] = None  # Accept camelCase from frontend
     location: Optional[str] = None
     willing_to_relocate: Optional[bool] = None
+    willingToRelocate: Optional[bool] = None  # Accept camelCase from frontend
     height: Optional[str] = None
     build: Optional[str] = None
     eye_color: Optional[str] = None
+    eyeColor: Optional[str] = None  # Accept camelCase from frontend
     hair_color: Optional[str] = None
+    hairColor: Optional[str] = None  # Accept camelCase from frontend
     ethnicity: Optional[str] = None
     acting_schools: Optional[list[str]] = None
+    actingSchools: Optional[list[str]] = None  # Accept camelCase from frontend
     workshops: Optional[list[str]] = None
     coaches: Optional[list[str]] = None
     stage_experience: Optional[bool] = None
+    stageExperience: Optional[bool] = None  # Accept camelCase from frontend
     film_experience: Optional[bool] = None
+    filmExperience: Optional[bool] = None  # Accept camelCase from frontend
     special_skills: Optional[list[str]] = None
+    specialSkills: Optional[list[str]] = None  # Accept camelCase from frontend
     union_status: Optional[str] = None
+    unionStatus: Optional[str] = None  # Accept camelCase from frontend
     preferred_genres: Optional[list[str]] = None
+    preferredGenres: Optional[list[str]] = None  # Accept camelCase from frontend
     career_goals: Optional[str] = None
+    careerGoals: Optional[str] = None  # Accept camelCase from frontend
     headshots: Optional[list[str]] = None
     resume: Optional[str] = None
     demo_reel: Optional[str] = None
+    demoReel: Optional[str] = None  # Accept camelCase from frontend
     social_links: Optional[list[str]] = None
+    socialLinks: Optional[list[str]] = None  # Accept camelCase from frontend
     bio: Optional[str] = None
     tagline: Optional[str] = None
     is_public: Optional[bool] = None
+    isPublic: Optional[bool] = None  # Accept camelCase from frontend
+    
+    def model_post_init(self, __context) -> None:
+        """Convert camelCase fields to snake_case after validation"""
+        # Handle camelCase conversions
+        if self.ageRange and not self.age_range:
+            self.age_range = self.ageRange
+        if self.willingToRelocate is not None and self.willing_to_relocate is None:
+            self.willing_to_relocate = self.willingToRelocate
+        if self.eyeColor and not self.eye_color:
+            self.eye_color = self.eyeColor
+        if self.hairColor and not self.hair_color:
+            self.hair_color = self.hairColor
+        if self.actingSchools and not self.acting_schools:
+            self.acting_schools = self.actingSchools
+        if self.stageExperience is not None and self.stage_experience is None:
+            self.stage_experience = self.stageExperience
+        if self.filmExperience is not None and self.film_experience is None:
+            self.film_experience = self.filmExperience
+        if self.specialSkills and not self.special_skills:
+            self.special_skills = self.specialSkills
+        if self.unionStatus and not self.union_status:
+            self.union_status = self.unionStatus
+        if self.preferredGenres and not self.preferred_genres:
+            self.preferred_genres = self.preferredGenres
+        if self.careerGoals and not self.career_goals:
+            self.career_goals = self.careerGoals
+        if self.demoReel and not self.demo_reel:
+            self.demo_reel = self.demoReel
+        if self.socialLinks and not self.social_links:
+            self.social_links = self.socialLinks
+        if self.isPublic is not None and self.is_public is None:
+            self.is_public = self.isPublic
 
 class ProfileResponse(BaseModel):
     id: str
@@ -835,9 +932,32 @@ def generate_ai_insights(article_title: str, article_summary: str) -> str:
     
     return " ".join(insights) if insights else "Stay informed about industry trends that may impact your career."
 
+# Initialize AI service instance
+ai_service = None
+
+def get_ai_service():
+    """Get or create AI service instance"""
+    global ai_service
+    if ai_service is None:
+        try:
+            ai_service = AIService()
+        except ValueError as e:
+            print(f"Failed to initialize AI service: {e}")
+            ai_service = None
+    return ai_service
+
 # Profile AI Insights helper functions
 def generate_profile_ai_insights(profile_data: dict) -> dict:
-    """Generate AI insights based on profile data"""
+    """Generate AI insights based on profile data using Gemini API"""
+    # Try to use AI service first
+    service = get_ai_service()
+    if service:
+        try:
+            return service.generate_profile_insights(profile_data)
+        except Exception as e:
+            print(f"AI service failed, falling back to rule-based insights: {e}")
+    
+    # Fallback to rule-based insights if AI service is unavailable
     insights = {
         "lookalikes": [],
         "scripts": [],

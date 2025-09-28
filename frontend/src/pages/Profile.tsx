@@ -59,7 +59,15 @@ const ProfilePage = () => {
         setAiInsightsLoading(true);
         setAiInsightsError(null);
         const insights = await authApi.getUserProfileAIInsights(user.id);
-        setAiRecommendations(insights);
+        
+        // Check if the AI service returned an error object
+        if (insights.error) {
+          console.error('AI service error:', insights.error, insights.details);
+          setAiInsightsError('AI insights temporarily unavailable. Showing fallback recommendations.');
+        } else {
+          setAiRecommendations(insights);
+          return; // Exit early if successful
+        }
       } catch (error) {
         console.error('Error loading AI insights:', error);
         setAiInsightsError('Failed to load AI insights');

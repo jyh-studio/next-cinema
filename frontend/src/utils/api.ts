@@ -8,9 +8,9 @@ const getApiBaseUrl = () => {
     }
   }
   
-  // For preview mode, production, or any other case, use direct backend URL
-  // Check if backend is running locally first, fallback to production
-  return 'http://localhost:8001/api/v1';
+  // Use the environment variable for API base URL, fallback to localhost:8000
+  const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+  return `${baseUrl}/api/v1`;
 };
 
 const API_BASE_URL = getApiBaseUrl();
