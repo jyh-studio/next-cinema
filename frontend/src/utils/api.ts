@@ -1,4 +1,19 @@
-const API_BASE_URL = '/api/v1';
+// Determine the correct API base URL based on environment
+const getApiBaseUrl = () => {
+  // Check if we're in development mode
+  if (import.meta.env.DEV) {
+    // If running on the dev server port with proxy, use relative URL
+    if (window.location.port === '5137') {
+      return '/api/v1';
+    }
+  }
+  
+  // For preview mode, production, or any other case, use direct backend URL
+  // Check if backend is running locally first, fallback to production
+  return 'http://localhost:8001/api/v1';
+};
+
+const API_BASE_URL = getApiBaseUrl();
 
 // Backend base URL for media files
 const BACKEND_BASE_URL = 'https://next-cinema-backend.onrender.com';
@@ -35,11 +50,30 @@ const apiRequest = async (endpoint: string, options: RequestInit = {}) => {
   const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
   
   if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
+    let errorMessage = `HTTP error! status: ${response.status}`;
+    try {
+      const errorData = await response.json();
+      errorMessage = errorData.detail || errorMessage;
+    } catch (parseError) {
+      // If we can't parse the error response as JSON, it might be HTML
+      const text = await response.text().catch(() => '');
+      if (text.includes('<!doctype') || text.includes('<html')) {
+        errorMessage = 'Server returned HTML instead of JSON. Check if the backend is running and accessible.';
+      }
+    }
+    throw new Error(errorMessage);
   }
   
-  return response.json();
+  // Ensure we can parse the response as JSON
+  try {
+    return await response.json();
+  } catch (parseError) {
+    const text = await response.text().catch(() => '');
+    if (text.includes('<!doctype') || text.includes('<html')) {
+      throw new Error('Server returned HTML instead of JSON. Check if the backend is running and accessible.');
+    }
+    throw new Error('Invalid JSON response from server');
+  }
 };
 
 // Community Feed API functions
@@ -98,11 +132,28 @@ export const communityApi = {
     });
     
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.detail || `Upload failed! status: ${response.status}`);
+      let errorMessage = `Upload failed! status: ${response.status}`;
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.detail || errorMessage;
+      } catch (parseError) {
+        const text = await response.text().catch(() => '');
+        if (text.includes('<!doctype') || text.includes('<html')) {
+          errorMessage = 'Cannot connect to server. Please check if the backend is running.';
+        }
+      }
+      throw new Error(errorMessage);
     }
     
-    return response.json();
+    try {
+      return await response.json();
+    } catch (parseError) {
+      const text = await response.text().catch(() => '');
+      if (text.includes('<!doctype') || text.includes('<html')) {
+        throw new Error('Cannot connect to server. Please check if the backend is running.');
+      }
+      throw new Error('Invalid response from server');
+    }
   },
 
   // Comments
@@ -132,11 +183,29 @@ export const authApi = {
     });
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.detail || 'Login failed');
+      let errorMessage = 'Login failed';
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.detail || errorMessage;
+      } catch (parseError) {
+        const text = await response.text().catch(() => '');
+        if (text.includes('<!doctype') || text.includes('<html')) {
+          errorMessage = 'Cannot connect to server. Please check if the backend is running.';
+        }
+      }
+      throw new Error(errorMessage);
     }
 
-    const data = await response.json();
+    let data;
+    try {
+      data = await response.json();
+    } catch (parseError) {
+      const text = await response.text().catch(() => '');
+      if (text.includes('<!doctype') || text.includes('<html')) {
+        throw new Error('Cannot connect to server. Please check if the backend is running.');
+      }
+      throw new Error('Invalid response from server');
+    }
     
     // Store token
     localStorage.setItem('nextcinema_token', data.access_token);
@@ -154,11 +223,29 @@ export const authApi = {
     });
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.detail || 'Signup failed');
+      let errorMessage = 'Signup failed';
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.detail || errorMessage;
+      } catch (parseError) {
+        const text = await response.text().catch(() => '');
+        if (text.includes('<!doctype') || text.includes('<html')) {
+          errorMessage = 'Cannot connect to server. Please check if the backend is running.';
+        }
+      }
+      throw new Error(errorMessage);
     }
 
-    const data = await response.json();
+    let data;
+    try {
+      data = await response.json();
+    } catch (parseError) {
+      const text = await response.text().catch(() => '');
+      if (text.includes('<!doctype') || text.includes('<html')) {
+        throw new Error('Cannot connect to server. Please check if the backend is running.');
+      }
+      throw new Error('Invalid response from server');
+    }
     
     // Store token
     localStorage.setItem('nextcinema_token', data.access_token);
