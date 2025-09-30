@@ -15,8 +15,8 @@ const getApiBaseUrl = () => {
 
 const API_BASE_URL = getApiBaseUrl();
 
-// Backend base URL for media files
-const BACKEND_BASE_URL = 'https://next-cinema-backend.onrender.com';
+// Backend base URL for media files - use environment variable
+const BACKEND_BASE_URL = import.meta.env.VITE_BACKEND_BASE_URL || 'http://localhost:8000';
 
 // Utility function to get full media URL
 export const getMediaUrl = (relativePath: string | null | undefined): string | null => {
