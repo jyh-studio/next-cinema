@@ -21,13 +21,15 @@ from ai_service import AIService
 # Load environment variables from .env file
 load_dotenv()
 
+BASE_DIR = Path(__file__).resolve().parent
+
 app = FastAPI()
 
 # Mount static files for serving uploaded content
-app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
+app.mount("/uploads", StaticFiles(directory=BASE_DIR / "uploads"), name="uploads")
 
 # Mount static files for serving worksheets
-app.mount("/worksheets", StaticFiles(directory="worksheets"), name="worksheets")
+app.mount("/worksheets", StaticFiles(directory=BASE_DIR / "worksheets"), name="worksheets")
 
 # Configuration
 SECRET_KEY = os.environ.get("JWT_SECRET", "your-secret-key-change-in-production")
@@ -35,7 +37,7 @@ ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.environ.get("JWT_EXPIRES_IN", "30"))
 
 # File upload configuration
-UPLOAD_DIR = Path("uploads")
+UPLOAD_DIR = BASE_DIR / "uploads"
 MAX_IMAGE_SIZE = 4 * 1024 * 1024  # 4MB
 MAX_VIDEO_SIZE = 50 * 1024 * 1024  # 50MB
 ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/gif", "image/webp"}
@@ -1288,6 +1290,11 @@ def validate_file_type_and_size(file: UploadFile) -> tuple[str, str]:
 
 def save_uploaded_file(file: UploadFile, media_type: str, file_extension: str) -> str:
     """Save uploaded file and return the file URL"""
+    if os.environ.get("VERCEL"):
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Uploads require durable object storage on Vercel.",
+        )
     # Generate unique filename
     unique_filename = f"{uuid.uuid4()}{file_extension}"
     
@@ -2277,7 +2284,7 @@ async def download_worksheet(category: str, item_id: str, current_user: UserResp
         )
     
     # Construct file path
-    file_path = Path(f"worksheets/{category}/{item_id}.pdf")
+    file_path = BASE_DIR / "worksheets" / category / f"{item_id}.pdf"
     
     # Check if file exists
     if not file_path.exists():
