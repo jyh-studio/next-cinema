@@ -8,11 +8,10 @@ export default defineConfig(() => ({
     host: "::",
     port: 5137,
     proxy: {
-      '/api': {
+      '^/(api|uploads)(/|$)': {
         target: process.env.VITE_PROXY_TARGET || 'http://localhost:8000',
         changeOrigin: true,
         secure: false,
-        rewrite: (path) => path.replace(/^\/api/, '/api'),
       },
     },
   },

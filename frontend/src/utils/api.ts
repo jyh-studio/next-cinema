@@ -1,22 +1,7 @@
-// Determine the correct API base URL based on environment
-const getApiBaseUrl = () => {
-  // Check if we're in development mode
-  if (import.meta.env.DEV) {
-    // If running on the dev server port with proxy, use relative URL
-    if (window.location.port === '5137') {
-      return '/api/v1';
-    }
-  }
-  
-  // Use the environment variable for API base URL, fallback to localhost:8000
-  const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
-  return `${baseUrl}/api/v1`;
-};
-
-const API_BASE_URL = getApiBaseUrl();
-
-// Backend base URL for media files - use environment variable
-const BACKEND_BASE_URL = import.meta.env.VITE_BACKEND_BASE_URL || 'http://localhost:8000';
+// Browser requests use the deployment's public routes. Runtime service bindings
+// are server-only and must never be embedded in a Vite build.
+const API_BASE_URL = `${(import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '')}/api/v1`;
+const BACKEND_BASE_URL = (import.meta.env.VITE_BACKEND_BASE_URL || '').replace(/\/$/, '');
 
 // Utility function to get full media URL
 export const getMediaUrl = (relativePath: string | null | undefined): string | null => {
